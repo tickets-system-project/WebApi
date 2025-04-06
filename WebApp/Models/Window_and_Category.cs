@@ -1,4 +1,4 @@
-﻿namespace DefaultNamespace;
+﻿namespace WebApp.Models;
 
 public class Window_and_Category
 {

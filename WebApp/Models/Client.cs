@@ -1,11 +1,18 @@
-﻿namespace DefaultNamespace;
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace WebApp.Models;
 
 public class Client
 {
     public int ID { get; set; }
+    [MaxLength(50)]
     public string FirstName { get; set; }
+    [MaxLength(50)]
     public string LastName { get; set; }
+    [MaxLength(11)]
     public string PESEL { get; set; }
-    public string Phone { get; set; }
-    public string Email { get; set; }
+    [MaxLength(20)]
+    public string? Phone { get; set; }
+    [MaxLength(100)]
+    public string? Email { get; set; }
 }
