@@ -1,6 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebApp", "WebApp\WebApp.csproj", "{8B6F2E1C-E24C-4586-9E37-F3BA7F624F14}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebApi", "WebApi\WebApi.csproj", "{8B6F2E1C-E24C-4586-9E37-F3BA7F624F14}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{4D4B92DD-5FB1-4444-BA97-08C6B7CCC9FD}"
 	ProjectSection(SolutionItems) = preProject
