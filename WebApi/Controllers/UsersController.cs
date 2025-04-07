@@ -32,7 +32,7 @@ namespace WebApi.Controllers
         [HttpPost]
         public async Task<IActionResult> CreateUser([FromBody] User user)
         {
-            // TODO
+            return NoContent(); // TODO: delete this placeholder
         }
 
         // TODO: POST, PUT, DELETE itp.

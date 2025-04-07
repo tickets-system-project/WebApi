@@ -18,6 +18,7 @@ public class AuthController : ControllerBase
         
         // error
         // return Unauthorized(new { Message = "Incorrect login or password" });
+        return NoContent(); // TODO: delete this placeholder
     }
     
     [HttpPost("register")]
@@ -30,5 +31,6 @@ public class AuthController : ControllerBase
 
         // error
         // return BadRequest(new { Message = "User already exists" });
+        return NoContent(); // TODO: delete this placeholder
     }
 }
