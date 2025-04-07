@@ -1,4 +1,4 @@
-﻿namespace WebApp.Models;
+﻿namespace WebApi.Models;
 
 public class LoginRequest
 {
