@@ -1,4 +1,4 @@
-﻿namespace WebApp.Models;
+﻿namespace WebApi.Models.Entities;
 
 public class Window_and_Category
 {

@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Server.HttpSys;
 using Microsoft.EntityFrameworkCore;
-using WebApp.Data;
+using WebApi.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
