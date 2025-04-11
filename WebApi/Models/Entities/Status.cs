@@ -2,13 +2,10 @@
 
 namespace WebApi.Models.Entities;
 
-public class CaseCategory
+public class Status
 {
     public int ID { get; set; }
     
-    [MaxLength(100)]
-    public string Letter { get; set; }
-    
-    [MaxLength(100)]
+    [MaxLength(50)]
     public string Name { get; set; }
 }
