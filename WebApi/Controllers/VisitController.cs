@@ -4,7 +4,7 @@ using WebApi.Models;
 namespace WebApi.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/visit")]
 public class VisitController : ControllerBase
 {
     [HttpPost("schedule")]

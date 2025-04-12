@@ -6,7 +6,7 @@ using WebApi.Models.Entities;
 namespace WebApi.Controllers;
 
 [ApiController]
-[Route("api/[controller]/{id}")]
+[Route("api/clerk/{id}")]
 public class ClerkController(ApplicationDbContext context) : ControllerBase
 {
     [HttpPost("nextClient")]
