@@ -9,7 +9,7 @@ namespace WebApi.Controllers;
 [Route("api/clerk/{id}")]
 public class ClerkController(ApplicationDbContext context) : ControllerBase
 {
-    [HttpPost("nextClient")]
+    [HttpPost("nextCase")]
     public async Task<IActionResult> CallNextClient()
     {
         // TODO: Retrieve the first client from the queue (status "waiting")
@@ -20,10 +20,10 @@ public class ClerkController(ApplicationDbContext context) : ControllerBase
         return NoContent(); // TODO: delete this placeholder
     }
     
-    [HttpPost("finishCase/{clientId}")]
-    public async Task<IActionResult> FinishCase(int clientId)
+    [HttpPost("finishCase/{caseId}")]
+    public async Task<IActionResult> FinishCase(int caseId)
     {
-        // TODO: Change the client's status to "completed"
+        // TODO: Change the case's status to "completed"
 
         // TODO: Return response indicating success or failure
         return NoContent(); // TODO: delete this placeholder
