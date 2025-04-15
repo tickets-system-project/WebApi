@@ -6,7 +6,7 @@ using WebApi.Models.Entities;
 namespace WebApi.Controllers;
 
 [ApiController]
-[Route("api/users")]
+[Route("api/user")]
 public class UsersController(ApplicationDbContext context) : ControllerBase
 {
     [HttpGet]
@@ -54,12 +54,11 @@ public class UsersController(ApplicationDbContext context) : ControllerBase
     }
     
     [HttpGet("search")]
-    public async Task<IActionResult> SearchUsers(string firstName = null, string lastName = null, string position = null, string caseCategory = null)
+    public async Task<IActionResult> SearchUsers(string? firstName = null, string? lastName = null, string? position = null) //string? caseCategory = null)
     {
-        // TODO: Search users by first name using LIKE or regex
-        // TODO: Search users by last name using LIKE or regex
-        // TODO: Filter users by position (if provided)
-        // TODO: Filter users by case category (if provided)
+        // TODO: query - employees by firstName, lastName (if provided) and by position (if selected)
+        
+        // if (!string.IsNullOrWhiteSpace(firstName))
             
         return NoContent(); // TODO: delete this placeholder
     }

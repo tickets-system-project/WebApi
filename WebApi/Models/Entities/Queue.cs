@@ -1,10 +1,18 @@
-﻿namespace WebApi.Models.Entities;
+﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace WebApi.Models.Entities;
 
 public class Queue
 {
+    [Key]
     public int ID { get; set; }
-    
-    public int WindowID { get; set; }
-    
-    public int ReservationID { get; set; }
+
+    [ForeignKey("Window")]
+    public int? WindowID { get; set; }
+    public Window? Window { get; set; }
+
+    [ForeignKey("Reservation")]
+    public int? ReservationID { get; set; }
+    public Reservation? Reservation { get; set; }
 }

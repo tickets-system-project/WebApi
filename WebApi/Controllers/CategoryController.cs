@@ -5,6 +5,8 @@ using WebApi.Models.Entities;
 
 namespace WebApi.Controllers;
 
+[ApiController]
+[Route("api/category")]
 public class CategoryController(ApplicationDbContext context) : ControllerBase
 {
     [HttpGet]

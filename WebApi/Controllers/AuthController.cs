@@ -4,8 +4,8 @@ using WebApi.Models;
 namespace WebApi.Controllers;
 
 // TODO
-[Route("api/[controller]")]
 [ApiController]
+[Route("api/auth")]
 public class AuthController : ControllerBase
 {
     [HttpPost("login")]
