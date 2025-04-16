@@ -9,15 +9,15 @@ public class Client
 
     [Required]
     [MaxLength(50)]
-    public string FirstName { get; set; }
+    public required string FirstName { get; set; }
 
     [Required]
     [MaxLength(50)]
-    public string LastName { get; set; }
+    public required string LastName { get; set; }
 
     [Required]
     [StringLength(11)] // fixed length
-    public string PESEL { get; set; }
+    public required string PESEL { get; set; }
 
     [MaxLength(20)]
     public string? Phone { get; set; }

@@ -14,5 +14,5 @@ public class LoginData
 
     [Required]
     [MaxLength(255)]
-    public string PasswordHash { get; set; }
+    public required string PasswordHash { get; set; }
 }
