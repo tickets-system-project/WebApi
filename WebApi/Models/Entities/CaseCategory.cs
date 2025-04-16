@@ -9,9 +9,9 @@ public class CaseCategory
 
     [Required]
     [MaxLength(100)]
-    public string Letter { get; set; }
+    public required string Letter { get; set; }
 
     [Required]
     [MaxLength(100)]
-    public string Name { get; set; }
+    public required string Name { get; set; }
 }

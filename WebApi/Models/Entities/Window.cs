@@ -9,5 +9,5 @@ public class Window
 
     [Required]
     [MaxLength(50)]
-    public string WindowNumber { get; set; }
+    public required string WindowNumber { get; set; }
 }
