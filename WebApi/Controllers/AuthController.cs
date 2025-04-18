@@ -67,16 +67,16 @@ public class AuthController(ApplicationDbContext context, IConfiguration configu
         return Ok(new { Token = token });
     }
     
-    [HttpPost("register")]
-    public async Task<IActionResult> Register([FromBody] RegisterRequest registerRequest)
-    {
-        // check register request
-
-        // ok
-        // return Ok(new { Message = "Registration successful" });
-
-        // error
-        // return BadRequest(new { Message = "User already exists" });
-        return NoContent(); // TODO: delete this placeholder
-    }
+    // [HttpPost("register")]
+    // public async Task<IActionResult> Register([FromBody] RegisterRequest registerRequest)
+    // {
+    //     // check register request
+    //
+    //     // ok
+    //     // return Ok(new { Message = "Registration successful" });
+    //
+    //     // error
+    //     // return BadRequest(new { Message = "User already exists" });
+    //     return NoContent(); // TODO: delete this placeholder
+    // }
 }

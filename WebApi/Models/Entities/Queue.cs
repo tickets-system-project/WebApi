@@ -15,4 +15,7 @@ public class Queue
     [ForeignKey("Reservation")]
     public int? ReservationID { get; set; }
     public Reservation? Reservation { get; set; }
+    
+    [MaxLength(50)]
+    public string? QueueCode {get; set;}
 }

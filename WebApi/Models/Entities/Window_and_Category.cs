@@ -16,7 +16,7 @@ public class Window_and_Category
     public int? CategoryID { get; set; }
     public CaseCategory? Category { get; set; }
 
-    public DateTime? Date { get; set; }
+    public DateOnly? Date { get; set; }
 
     [ForeignKey("Clerk")]
     public int? ClerkID { get; set; }

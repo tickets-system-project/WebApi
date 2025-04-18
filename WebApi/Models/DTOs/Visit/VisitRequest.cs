@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace WebApi.Models.DTOs;
+namespace WebApi.Models.DTOs.Visit;
 
 public class VisitRequest
 {
@@ -20,4 +20,13 @@ public class VisitRequest
     
     [Phone(ErrorMessage = "Invalid phone number.")]
     public string? Phone { get; set; }
+
+    [Required]
+    public required string CaseCategoryName { get; set; }
+
+    [Required]
+    public required DateOnly Date { get; set; }
+
+    [Required]
+    public required TimeOnly Time { get; set; }
 }
