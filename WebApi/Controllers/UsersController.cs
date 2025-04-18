@@ -13,8 +13,6 @@ namespace WebApi.Controllers;
 [Route("api/user")]
 public class UsersController(ApplicationDbContext context, IMapper mapper) : ControllerBase
 {
-    
-    
     private async Task<IActionResult?> ValidateEmailAsync(User user, User? existingUser)
     {
         if (!string.IsNullOrWhiteSpace(user.Email) && !new EmailAddressAttribute().IsValid(user.Email))
@@ -41,13 +39,6 @@ public class UsersController(ApplicationDbContext context, IMapper mapper) : Con
         }
 
         return null;
-    }
-
-    private async Task<IActionResult?> ValidateRoleAsync(int? roleId)
-    {
-        if (!roleId.HasValue) return null;
-        var roleExists = await context.Roles.AnyAsync(r => r.ID == roleId.Value);
-        return !roleExists ? BadRequest($"Role with ID {roleId} does not exist.") : null;
     }
 
     private async Task<bool> UsernameExistsAsync(string username)
@@ -97,6 +88,11 @@ public class UsersController(ApplicationDbContext context, IMapper mapper) : Con
         if (!ModelState.IsValid) return BadRequest(ModelState);
         var user = mapper.Map<User>(userDto);
         
+        var role = await context.Roles.FirstOrDefaultAsync(r => r.Name == userDto.RoleName);
+        if (role == null) return BadRequest($"Role '{userDto.RoleName}' does not exist.");
+        
+        user.RoleID = role.ID;
+        
         if (string.IsNullOrWhiteSpace(user.FirstName) || string.IsNullOrWhiteSpace(user.LastName) ||
             string.IsNullOrWhiteSpace(user.Username))
         {
@@ -105,9 +101,6 @@ public class UsersController(ApplicationDbContext context, IMapper mapper) : Con
         
         var emailValidation = await ValidateEmailAsync(user, null);
         if (emailValidation != null) return emailValidation;
-        
-        var roleValidation = await ValidateRoleAsync(user.RoleID);
-        if (roleValidation != null) return roleValidation;
         
         if (await UsernameExistsAsync(user.Username)) return BadRequest("Username is already taken.");
 
@@ -140,11 +133,13 @@ public class UsersController(ApplicationDbContext context, IMapper mapper) : Con
         
         var updatedUser = mapper.Map(userDto, existingUser);
         
+        var role = await context.Roles.FirstOrDefaultAsync(r => r.Name == userDto.RoleName);
+        if (role == null) return BadRequest($"Role '{userDto.RoleName}' does not exist.");
+        
+        if (existingUser.RoleID != role.ID) updatedUser.RoleID = role.ID;
+        
         var emailValidation = await ValidateEmailAsync(updatedUser, existingUser);
         if (emailValidation != null) return emailValidation;
-        
-        var roleValidation = await ValidateRoleAsync(updatedUser.RoleID);
-        if (roleValidation != null) return roleValidation;
         
         if (!string.IsNullOrWhiteSpace(userDto.Username) &&
             !string.Equals(userDto.Username, existingUser.Username, StringComparison.OrdinalIgnoreCase))
@@ -189,13 +184,13 @@ public class UsersController(ApplicationDbContext context, IMapper mapper) : Con
         var query = context.Users.Include(u => u.Role).AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(firstName))
-            query = query.Where(u => u.FirstName.Contains(firstName));
+            query = query.Where(u => u.FirstName.ToLower().Contains(firstName.ToLower()));
 
         if (!string.IsNullOrWhiteSpace(lastName))
-            query = query.Where(u => u.LastName.Contains(lastName));
+            query = query.Where(u => u.LastName.ToLower().Contains(lastName.ToLower()));
 
         if (!string.IsNullOrWhiteSpace(position))
-            query = query.Where(u => u.Role.Name.Contains(position));
+            query = query.Where(u => u.Role.Name.ToLower().Contains(position.ToLower()));
 
         var result = await query.ToListAsync();
         var resultDtos = mapper.Map<List<UserDto>>(result);
