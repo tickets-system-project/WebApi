@@ -20,9 +20,9 @@ public class Reservation
     public int? StatusID { get; set; }
     public Status? Status { get; set; }
 
-    public DateTime? Date { get; set; }
+    public DateOnly? Date { get; set; }
     
-    public TimeSpan? Time { get; set; }
+    public TimeOnly? Time { get; set; }
 
     [MaxLength(50)]
     public string? ConfirmationCode { get; set; }

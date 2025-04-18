@@ -19,9 +19,12 @@ public class Client
     [StringLength(11)] // fixed length
     public required string PESEL { get; set; }
 
-    [MaxLength(20)]
-    public string? Phone { get; set; }
-
+    [Required]
     [MaxLength(100)]
-    public string? Email { get; set; }
+    [EmailAddress]
+    public required string Email { get; set; }
+    
+    [MaxLength(20)]
+    [Phone]
+    public string? Phone { get; set; }
 }
