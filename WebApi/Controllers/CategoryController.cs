@@ -123,12 +123,20 @@ public class CategoryController(ApplicationDbContext context) : ControllerBase
     }
     
     [HttpDelete("{id}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> DeleteCategory(int id)
     {
-        // TODO: Find the category by id
-        // TODO: Delete the category from the database
+        var category = await context.CaseCategories.FindAsync(id);
+        if (category == null)
+        {
+            return NotFound();
+        }
 
-        return NoContent(); // TODO: delete this placeholder
+        context.CaseCategories.Remove(category);
+        await context.SaveChangesAsync();
+
+        return NoContent();
     }
     
     [HttpGet("{categoryId}/queue")]
