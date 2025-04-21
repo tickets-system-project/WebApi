@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using WebApi.Data;
+using WebApi.Models.DTOs.Category;
 using WebApi.Models.Entities;
 
 namespace WebApi.Controllers;
@@ -29,12 +30,45 @@ public class CategoryController(ApplicationDbContext context) : ControllerBase
     }
     
     [HttpPost]
-    public async Task<IActionResult> CreateCategory([FromBody] CaseCategory category)
+    [ProducesResponseType(typeof(CaseCategory), StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<IActionResult> CreateCategory([FromBody] CreateCaseCategoryDto categoryDto)
     {
-        // TODO: Validate the Category object (e.g., name, etc.)
-        // TODO: Add the new category to the database
-
-        return NoContent(); // TODO: delete this placeholder
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(ModelState);
+        }
+        
+        var letterExists = await context.CaseCategories
+            .AnyAsync(c => c.Letter == categoryDto.Letter);
+    
+        if (letterExists)
+        {
+            return Conflict($"Category with letter '{categoryDto.Letter}' already exists.");
+        }
+        
+        var nameExists = await context.CaseCategories
+            .AnyAsync(c => c.Name == categoryDto.Name);
+    
+        if (nameExists)
+        {
+            return Conflict($"Category with name '{categoryDto.Name}' already exists.");
+        }
+        
+        var category = new CaseCategory
+        {
+            Letter = categoryDto.Letter,
+            Name = categoryDto.Name
+        };
+        
+        context.CaseCategories.Add(category);
+        await context.SaveChangesAsync();
+        
+        return CreatedAtAction(
+            nameof(GetCategory), 
+            new { id = category.ID }, 
+            category);
     }
     
     [HttpPut("{id}")]
