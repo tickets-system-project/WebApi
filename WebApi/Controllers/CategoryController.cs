@@ -140,11 +140,37 @@ public class CategoryController(ApplicationDbContext context) : ControllerBase
     }
     
     [HttpGet("{categoryId}/queue")]
+    [ProducesResponseType(typeof(IEnumerable<ReservationQueueDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetQueueForClerkCategory(int categoryId)
     {
-        // TODO: Find the category by categoryID
-        // TODO: Get all clients waiting for the same case category as the clerk
-        // TODO: Return the client queue
-        return NoContent(); // TODO: delete this placeholder
+        var category = await context.CaseCategories
+            .FirstOrDefaultAsync(c => c.ID == categoryId);
+    
+        if (category == null)
+        {
+            return NotFound($"Category with ID {categoryId} not found.");
+        }
+        
+        var queue = await context.Queue
+            .Include(q => q.Reservation)
+            .ThenInclude(r => r.Client)
+            .Include(q => q.Reservation)
+            .ThenInclude(r => r.Status)
+            .Include(q => q.Window)
+            .Where(q => q.Reservation.CategoryID == categoryId && 
+                        q.Reservation.Status.Name == "Oczekujący")
+            .OrderBy(q => q.Reservation.Time)
+            .Select(q => new ReservationQueueDto
+            {
+              
+                FirstName = q.Reservation.Client.FirstName,
+                LastName = q.Reservation.Client.LastName,
+                PESEL = q.Reservation.Client.PESEL,
+      
+            })
+            .ToListAsync();
+
+        return Ok(queue);
     }
 }
