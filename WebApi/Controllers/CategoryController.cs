@@ -72,12 +72,54 @@ public class CategoryController(ApplicationDbContext context) : ControllerBase
     }
     
     [HttpPut("{id}")]
-    public async Task<IActionResult> UpdateCategory(int id, [FromBody] CaseCategory category)
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<IActionResult> UpdateCategory(int id, [FromBody] UpdateCaseCategoryDto categoryDto)
     {
-        // TODO: Check if the category exists by id
-        // TODO: Update the category properties (e.g., name, etc.)
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(ModelState);
+        }
+        var existingCategory = await context.CaseCategories.FindAsync(id);
+        if (existingCategory == null)
+        {
+            return NotFound();
+        }
+        if (!string.IsNullOrEmpty(categoryDto.Letter) && 
+            categoryDto.Letter != existingCategory.Letter)
+        {
+            var letterExists = await context.CaseCategories
+                .AnyAsync(c => c.Letter == categoryDto.Letter && c.ID != id);
+        
+            if (letterExists)
+            {
+                return Conflict($"Category with letter '{categoryDto.Letter}' already exists.");
+            }
+            existingCategory.Letter = categoryDto.Letter;
+        }
+        if (!string.IsNullOrEmpty(categoryDto.Name) && 
+            categoryDto.Name != existingCategory.Name)
+        {
+            var nameExists = await context.CaseCategories
+                .AnyAsync(c => c.Name == categoryDto.Name && c.ID != id);
+        
+            if (nameExists)
+            {
+                return Conflict($"Category with name '{categoryDto.Name}' already exists.");
+            }
+            existingCategory.Name = categoryDto.Name;
+        }
+        if (string.IsNullOrEmpty(categoryDto.Letter) && 
+            string.IsNullOrEmpty(categoryDto.Name))
+        {
+            return BadRequest("No update data provided.");
+        }
+        context.CaseCategories.Update(existingCategory);
+        await context.SaveChangesAsync();
 
-        return NoContent(); // TODO: delete this placeholder
+        return NoContent();
     }
     
     [HttpDelete("{id}")]
