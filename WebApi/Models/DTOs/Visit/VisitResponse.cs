@@ -11,7 +11,7 @@ public class VisitResponse
     public required TimeOnly Time { get; set; }
     
     [Required]
-    public required string CaseCategoryName { get; set; }
+    public required int CaseCategoryID { get; set; }
     
     [Required]
     public required string ConfirmationCode { get; set; }

@@ -19,7 +19,7 @@ public class VisitDetailsDto
     public string? Phone { get; set; }
     
     [Required]
-    public required string CaseCategoryName { get; set; }
+    public required int CaseCategoryID { get; set; }
     
     [Required]
     public required DateOnly Date { get; set; }
@@ -28,5 +28,5 @@ public class VisitDetailsDto
     public required TimeOnly Time { get; set; }
     
     [Required]
-    public required string StatusName { get; set; }
+    public required int StatusID { get; set; }
 }

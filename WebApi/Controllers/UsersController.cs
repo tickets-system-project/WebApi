@@ -88,8 +88,8 @@ public class UsersController(ApplicationDbContext context, IMapper mapper) : Con
         if (!ModelState.IsValid) return BadRequest(ModelState);
         var user = mapper.Map<User>(userDto);
         
-        var role = await context.Roles.FirstOrDefaultAsync(r => r.Name == userDto.RoleName);
-        if (role == null) return BadRequest($"Role '{userDto.RoleName}' does not exist.");
+        var role = await context.Roles.FirstOrDefaultAsync(r => r.ID == userDto.RoleID);
+        if (role == null) return BadRequest($"Role with id '{userDto.RoleID}' does not exist.");
         
         user.RoleID = role.ID;
         
@@ -132,12 +132,15 @@ public class UsersController(ApplicationDbContext context, IMapper mapper) : Con
         if (privilegeCheck != null) return privilegeCheck;
         
         var updatedUser = mapper.Map(userDto, existingUser);
-        
-        var role = await context.Roles.FirstOrDefaultAsync(r => r.Name == userDto.RoleName);
-        if (role == null) return BadRequest($"Role '{userDto.RoleName}' does not exist.");
-        
-        if (existingUser.RoleID != role.ID) updatedUser.RoleID = role.ID;
-        
+
+        if (userDto.RoleID != null)
+        {
+            var role = await context.Roles.FirstOrDefaultAsync(r => r.ID == userDto.RoleID);
+            if (role == null) return BadRequest($"Role with id '{userDto.RoleID}' does not exist.");
+
+            if (existingUser.RoleID != role.ID) updatedUser.RoleID = role.ID;
+        }
+
         var emailValidation = await ValidateEmailAsync(updatedUser, existingUser);
         if (emailValidation != null) return emailValidation;
         
