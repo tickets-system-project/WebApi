@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using WebApi.Data;
 using WebApi.Models.DTOs.Category;
@@ -10,13 +11,17 @@ namespace WebApi.Controllers;
 [Route("api/category")]
 public class CategoryController(ApplicationDbContext context) : ControllerBase
 {
+    
     [HttpGet]
+    [Authorize(Roles = "Administrator")]
     public async Task<ActionResult<IEnumerable<CaseCategory>>> GetCategories()
     {
         return await context.CaseCategories.ToListAsync();
     }
     
+    
     [HttpGet("{id}")]
+    [Authorize(Roles = "Administrator")]
     public async Task<ActionResult<CaseCategory>> GetCategory(int id)
     {
         var category = await context.CaseCategories.FindAsync(id);
@@ -30,6 +35,7 @@ public class CategoryController(ApplicationDbContext context) : ControllerBase
     }
     
     [HttpPost]
+    [Authorize(Roles = "Administrator")]
     [ProducesResponseType(typeof(CaseCategory), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
@@ -72,6 +78,7 @@ public class CategoryController(ApplicationDbContext context) : ControllerBase
     }
     
     [HttpPut("{id}")]
+    [Authorize(Roles = "Administrator")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -119,10 +126,11 @@ public class CategoryController(ApplicationDbContext context) : ControllerBase
         context.CaseCategories.Update(existingCategory);
         await context.SaveChangesAsync();
 
-        return NoContent();
+        return Ok(existingCategory);
     }
     
     [HttpDelete("{id}")]
+    [Authorize(Roles = "Administrator")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> DeleteCategory(int id)
@@ -138,8 +146,13 @@ public class CategoryController(ApplicationDbContext context) : ControllerBase
 
         return NoContent();
     }
-    
+    //Tylko admin albo urzędnik 
+    // Wybierać queueCode, imie i nazwisko, kategoria
+    // Dla admina wszyscy
+    // Dla urzędniaka tylko oczekujacy
+    // Sprawdzić jak Konefał w usercontroller czy jest adminem czy jest zwykłem urzednikiem
     [HttpGet("{categoryId}/queue")]
+    [Authorize(Roles = "Administrator")]
     [ProducesResponseType(typeof(IEnumerable<ReservationQueueDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetQueueForClerkCategory(int categoryId)
