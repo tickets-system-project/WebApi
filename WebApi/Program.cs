@@ -7,6 +7,7 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Npgsql;
 using WebApi.Data;
+using WebApi.Helpers;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -63,6 +64,12 @@ builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 builder.Services.AddOpenApi();
 
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    RegistrationNumberGenerator.Initialize(dbContext);
+}
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
