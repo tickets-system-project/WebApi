@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using WebApi.Data;
 using WebApi.Models;
+using WebApi.Models.DTOs.Queue;
 
 namespace WebApi.Controllers;
 
@@ -17,14 +18,36 @@ public class QueueController(ApplicationDbContext context) : ControllerBase
         
         return NoContent(); // TODO: delete this placeholder
     }
-    
     [HttpGet("called")]
+    [ProducesResponseType(typeof(IEnumerable<CalledClientDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetCalledClients()
     {
-        // TODO: return client numbers that are being called (function for system, one number for each window)
+        var calledClients = await context.Queue
+           
+            .Where(q => q.QueueCode != null && q.WindowID != null)
         
-        return NoContent(); // TODO: delete this placeholder
+       
+            .Include(q => q.Window)
+            .Include(q => q.Reservation)
+            .ThenInclude(r => r.Status)
+        
+            
+            .Where(q => q.Reservation != null && 
+                        q.Reservation.Status != null &&
+                        q.Reservation.Status.Name == "Wezwany")
+        
+            
+            .Select(q => new CalledClientDto
+            {
+                QueueCode = q.QueueCode!,
+                WindowNumber = q.Window!.WindowNumber
+            })
+            .ToListAsync();
+
+        return Ok(calledClients);
     }
+
+
     
     [HttpGet("awaiting")]
     [ProducesResponseType(typeof(IEnumerable<string>), StatusCodes.Status200OK)]
@@ -33,7 +56,7 @@ public class QueueController(ApplicationDbContext context) : ControllerBase
         var awaitingClients = await context.Queue
             .Include(q => q.Reservation)
             .ThenInclude(r => r.Status)
-            .Where(q => q.Reservation.Status.Name == "Oczekujący") 
+            .Where(q => q.Reservation.Status.Name == "Oczekujący" && q.QueueCode != null) 
             .OrderBy(q => q.Reservation.Time) 
             .Take(20) 
             .Select(q => q.QueueCode) 
