@@ -9,9 +9,7 @@ public class MappingProfile : Profile
 {
     public MappingProfile()
     {
-        CreateMap<User, UserDto>()
-            .ForMember(dest => dest.RoleName, 
-                opt => opt.MapFrom(src => src.Role.Name));
+        CreateMap<User, UserDto>();
 
         CreateMap<CreateUserDto, User>();
 
@@ -29,8 +27,8 @@ public class MappingProfile : Profile
                 opt => opt.MapFrom(_ => GenerateConfirmationCode()));
 
         CreateMap<Reservation, VisitResponse>()
-            .ForMember(dest => dest.CaseCategoryName, 
-                opt => opt.MapFrom(src => src.Category.Name));
+            .ForMember(dest => dest.CaseCategoryID, 
+                opt => opt.MapFrom(src => src.Category.ID));
         
         CreateMap<Reservation, VisitDetailsDto>()
             .ForMember(dest => dest.FirstName, opt => opt.MapFrom(src => src.Client.FirstName))
@@ -38,10 +36,9 @@ public class MappingProfile : Profile
             .ForMember(dest => dest.PESEL, opt => opt.MapFrom(src => src.Client.PESEL))
             .ForMember(dest => dest.Email, opt => opt.MapFrom(src => src.Client.Email))
             .ForMember(dest => dest.Phone, opt => opt.MapFrom(src => src.Client.Phone))
-            .ForMember(dest => dest.CaseCategoryName, opt => opt.MapFrom(src => src.Category.Name))
+            .ForMember(dest => dest.CaseCategoryID, opt => opt.MapFrom(src => src.Category.ID))
             .ForMember(dest => dest.Date, opt => opt.MapFrom(src => src.Date.Value))
-            .ForMember(dest => dest.Time, opt => opt.MapFrom(src => src.Time.Value))
-            .ForMember(dest => dest.StatusName, opt => opt.MapFrom(src => src.Status.Name));
+            .ForMember(dest => dest.Time, opt => opt.MapFrom(src => src.Time.Value));
     }
     
     private static string GenerateConfirmationCode()

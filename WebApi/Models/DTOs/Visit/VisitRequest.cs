@@ -12,6 +12,7 @@ public class VisitRequest
 
     [Required]
     [StringLength(11, MinimumLength = 11, ErrorMessage = "PESEL must be 11 characters.")]
+    [RegularExpression(@"^\d{11}$", ErrorMessage = "PESEL must consist of 11 digits.")]
     public required string Pesel { get; set; }
 
     [Required]
@@ -22,7 +23,7 @@ public class VisitRequest
     public string? Phone { get; set; }
 
     [Required]
-    public required string CaseCategoryName { get; set; }
+    public required int CaseCategoryID { get; set; }
 
     [Required]
     public required DateOnly Date { get; set; }
