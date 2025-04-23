@@ -13,7 +13,8 @@ namespace WebApi.Controllers;
 [Route("api/visit")]
 public class VisitController(ApplicationDbContext context, IMapper mapper) : ControllerBase
 {
-    // TODO: use emailService or this is enough?
+    // TODO: use mock emailServer
+    // TODO: deactivation link
     private static async Task SendConfirmationEmail(Client client, Reservation reservation, CaseCategory category)
     {
         const string subject = "Potwierdzenie wizyty";
@@ -74,8 +75,8 @@ public class VisitController(ApplicationDbContext context, IMapper mapper) : Con
         if (visitRequest.Date == today && visitRequest.Time <= nowTime)
                 return BadRequest("Visit time must be later than the current time.");
         
-        var category = await context.CaseCategories.FirstOrDefaultAsync(c => c.Name == visitRequest.CaseCategoryName);
-        if (category == null) return BadRequest("Invalid Case Category Name.");
+        var category = await context.CaseCategories.FirstOrDefaultAsync(c => c.ID == visitRequest.CaseCategoryID);
+        if (category == null) return BadRequest("Invalid Case Category ID.");
         
         var slot = await context.Slots.FirstOrDefaultAsync(s => s.CategoryID == category.ID
                                                                 && s.Date == visitRequest.Date 
@@ -187,8 +188,8 @@ public class VisitController(ApplicationDbContext context, IMapper mapper) : Con
         
         if (!ModelState.IsValid) return BadRequest(ModelState);
 
-        var category = await context.CaseCategories.FirstOrDefaultAsync(c => c.Name == request.CaseCategoryName);
-        if (category == null) return BadRequest("Invalid Case Category Name.");
+        var category = await context.CaseCategories.FirstOrDefaultAsync(c => c.ID == request.CaseCategoryID);
+        if (category == null) return BadRequest("Invalid Case Category ID.");
 
         var slot = await context.Slots.FirstOrDefaultAsync(s => s.CategoryID == category.ID 
                                                                 && s.Date == today 

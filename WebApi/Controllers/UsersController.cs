@@ -88,8 +88,8 @@ public class UsersController(ApplicationDbContext context, IMapper mapper) : Con
         if (!ModelState.IsValid) return BadRequest(ModelState);
         var user = mapper.Map<User>(userDto);
         
-        var role = await context.Roles.FirstOrDefaultAsync(r => r.Name == userDto.RoleName);
-        if (role == null) return BadRequest($"Role '{userDto.RoleName}' does not exist.");
+        var role = await context.Roles.FirstOrDefaultAsync(r => r.ID == userDto.RoleID);
+        if (role == null) return BadRequest($"Role with id '{userDto.RoleID}' does not exist.");
         
         user.RoleID = role.ID;
         
@@ -132,12 +132,15 @@ public class UsersController(ApplicationDbContext context, IMapper mapper) : Con
         if (privilegeCheck != null) return privilegeCheck;
         
         var updatedUser = mapper.Map(userDto, existingUser);
-        
-        var role = await context.Roles.FirstOrDefaultAsync(r => r.Name == userDto.RoleName);
-        if (role == null) return BadRequest($"Role '{userDto.RoleName}' does not exist.");
-        
-        if (existingUser.RoleID != role.ID) updatedUser.RoleID = role.ID;
-        
+
+        if (userDto.RoleID != null)
+        {
+            var role = await context.Roles.FirstOrDefaultAsync(r => r.ID == userDto.RoleID);
+            if (role == null) return BadRequest($"Role with id '{userDto.RoleID}' does not exist.");
+
+            if (existingUser.RoleID != role.ID) updatedUser.RoleID = role.ID;
+        }
+
         var emailValidation = await ValidateEmailAsync(updatedUser, existingUser);
         if (emailValidation != null) return emailValidation;
         
@@ -179,7 +182,7 @@ public class UsersController(ApplicationDbContext context, IMapper mapper) : Con
     [ProducesResponseType(401)]
     [ProducesResponseType(403)]
     [Produces("application/json")]
-    public async Task<IActionResult> SearchUsers(string? firstName = null, string? lastName = null, string? position = null) //string? caseCategory = null)
+    public async Task<IActionResult> SearchUsers(string? firstName = null, string? lastName = null, int? roleID = null)
     {
         var query = context.Users.Include(u => u.Role).AsQueryable();
 
@@ -189,8 +192,8 @@ public class UsersController(ApplicationDbContext context, IMapper mapper) : Con
         if (!string.IsNullOrWhiteSpace(lastName))
             query = query.Where(u => u.LastName.ToLower().Contains(lastName.ToLower()));
 
-        if (!string.IsNullOrWhiteSpace(position))
-            query = query.Where(u => u.Role.Name.ToLower().Contains(position.ToLower()));
+        if (roleID.HasValue)
+            query = query.Where(u => u.Role.ID == roleID.Value);
 
         var result = await query.ToListAsync();
         var resultDtos = mapper.Map<List<UserDto>>(result);

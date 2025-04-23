@@ -5,5 +5,5 @@ namespace WebApi.Models.DTOs.Visit;
 public class UnregisteredVisitRequest
 {
     [Required]
-    public required string CaseCategoryName { get; set; }
+    public required int CaseCategoryID { get; set; }
 }

@@ -19,5 +19,5 @@ public class UserDto
     public required string Email { get; set; }
     
     [Required]
-    public required string RoleName { get; set; }
+    public required int RoleID { get; set; }
 }
