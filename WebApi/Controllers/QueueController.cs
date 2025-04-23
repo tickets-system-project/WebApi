@@ -10,7 +10,8 @@ namespace WebApi.Controllers;
 [Route("api/queue")]
 public class QueueController(ApplicationDbContext context) : ControllerBase
 {
-
+    // Dodać metode do wyświetlania wszystkich okeinek dla admina, a getWindowQueue to ednpoint do przycisku dla kazdego 
+    // okienka aby wyświetlić wszytstkich petentów, na początku max 2 osoby
     [HttpGet("window/{windowId}")]
     public async Task<IActionResult> GetWindowQueue(int windowId)
     {
