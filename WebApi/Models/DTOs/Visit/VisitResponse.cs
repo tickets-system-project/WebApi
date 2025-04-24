@@ -18,4 +18,7 @@ public class VisitResponse
     
     [Required]
     public required string Email { get; set; }
+    
+    [Required]
+    public required string CancellationLink { get; set; }
 }

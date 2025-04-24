@@ -11,31 +11,8 @@ namespace WebApi.Controllers;
 
 [ApiController]
 [Route("api/visit")]
-public class VisitController(ApplicationDbContext context, IMapper mapper) : ControllerBase
+public class VisitController(ApplicationDbContext context, IMapper mapper, EmailService emailService) : ControllerBase
 {
-    // TODO: use mock emailServer
-    // TODO: deactivation link
-    private static async Task SendConfirmationEmail(Client client, Reservation reservation, CaseCategory category)
-    {
-        const string subject = "Potwierdzenie wizyty";
-        var body = $"""
-                    
-                            Witaj {client.FirstName} {client.LastName},
-                    
-                            Twoja wizyta została zaplanowana:
-                            - Data: {reservation.Date:yyyy-MM-dd}
-                            - Godzina: {reservation.Time:hh\:mm}
-                            - Kategoria: {category.Name}
-                            - Kod potwierdzenia: {reservation.ConfirmationCode}
-                    
-                            Pozdrawiamy,
-                            Zespół Obsługi
-                    """;
-        
-        Console.WriteLine($"[EMAIL]\nTo: {client.Email}\nSubject: {subject}\n{body}");
-        await Task.CompletedTask;
-    }
-    
     private async Task<bool> AddReservationToQueue(Reservation reservation, string registrationNumber)
     {
         try
@@ -57,13 +34,44 @@ public class VisitController(ApplicationDbContext context, IMapper mapper) : Con
         }
     }
     
+    private static List<object> GetInfoList()
+    {
+        var list = new List<object>
+        {
+            new { 
+                title = "Zjaw się przed czasem", 
+                description = "Przyjdź na miejsce przynajmniej 10 minut przed zaplanowaną godziną wizyty, " +
+                              "aby mieć czas potwierdzić swoją obecność kodem otrzymanym podczas rejestracji"
+            },
+            new
+            {
+                title = "Potwierdź swoje przybycie", 
+                description = "Za pomocą otrzymanego kodu, potwierdź swoje przybycie do urzędu, " +
+                              "zrobisz to w terminalu znajdującym się przy wejściu. " +
+                              "UWAGA: Jeśli nie potwierdzisz przybycia minimum 5 minut przed godziną wizyty, " +
+                              "Twoja rezerwacja może zostać anulowana."
+            },
+            new
+            {
+                title = "Czekaj na wezwanie", 
+                description = "Po potwierdzeniu wizyty kodem otrzymanym podczas rejestracji, otrzymasz numerek kolejkowy. " +
+                              "Gdy nadejdzie Twoja kolej, na ekranie zobaczysz swój numer."
+            }
+        };
+
+        return list;
+    }
+    
     [HttpPost("schedule")]
     [Consumes("application/json")]
     [ProducesResponseType(typeof(VisitResponse), 200)]
     [ProducesResponseType(400)]
+    [ProducesResponseType(500)]
     [Produces("application/json")]
     public async Task<IActionResult> ScheduleVisit([FromBody] VisitRequest visitRequest)
     {
+        var baseUrl = $"{Request.Scheme}://{Request.Host}";
+        
         if (!ModelState.IsValid) return BadRequest(ModelState);
         
         var today = DateOnly.FromDateTime(DateTime.Now);
@@ -107,6 +115,7 @@ public class VisitController(ApplicationDbContext context, IMapper mapper) : Con
         var existingReservation = await context.Reservations
             .FirstOrDefaultAsync(r =>
                 r.ClientID == client.ID &&
+                r.StatusID != 3 &&
                 r.Date == visitRequest.Date &&
                 r.Time == visitRequest.Time);
 
@@ -123,12 +132,65 @@ public class VisitController(ApplicationDbContext context, IMapper mapper) : Con
         slot.CurrentReservations++;
         await context.SaveChangesAsync();
         
+        var cancellationLink = $"{baseUrl}/visit/cancel/{reservation.ID}";
+        
         var visitResponse = mapper.Map<VisitResponse>(reservation);
         visitResponse.Email = visitRequest.Email;
+        visitResponse.CancellationLink = cancellationLink;
         
-        await SendConfirmationEmail(client, reservation, category);
+        try
+        {
+            await emailService.SendConfirmationEmailAsync(client, reservation, category, cancellationLink);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return StatusCode(500, "An error occurred while sending the confirmation email.");
+        }
 
         return Ok(visitResponse);
+    }
+    
+    [HttpPost("cancel/{id}")]
+    [ProducesResponseType(200)]
+    [ProducesResponseType(400)]
+    [ProducesResponseType(404)]
+    [Produces("application/json")]
+    public async Task<IActionResult> CancelVisit(int id)
+    {
+        var reservation = await context.Reservations.FindAsync(id);
+
+        if (reservation == null) return NotFound("Reservation not found.");
+        if (reservation.StatusID == 3) return BadRequest("Reservation is already cancelled.");
+        
+        var client = await context.Clients.FirstOrDefaultAsync(c => c.ID == reservation.ClientID);
+        if (client == null) return StatusCode(500, "An error occurred while searching for the client.");
+        
+        var category = await context.CaseCategories.FirstOrDefaultAsync(c => c.ID == reservation.CategoryID);
+        if (category == null) return StatusCode(500, "An error occurred while searching for the category.");
+        
+        var slot = await context.Slots.FirstOrDefaultAsync(s =>
+            s.CategoryID == reservation.CategoryID &&
+            s.Date == reservation.Date &&
+            s.Time == reservation.Time);
+
+        if (slot == null) return StatusCode(500, "Slot corresponding to the reservation was not found.");
+
+        if (slot.CurrentReservations > 0) 
+            slot.CurrentReservations--;
+        
+        reservation.StatusID = 3;
+        await context.SaveChangesAsync();
+        
+        try
+        {
+            await emailService.SendCancellationEmailAsync(client, reservation, category);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return StatusCode(500, "An error occurred while sending the cancellation email.");
+        }
+
+        return Ok("Pomyślnie odwołano rezerwację wizyty. Potwierdzenie zostało wysłane na podany adres e-mail podczas rezerwacji.");
     }
     
     [HttpGet("details/{visitId}")]
@@ -165,7 +227,7 @@ public class VisitController(ApplicationDbContext context, IMapper mapper) : Con
                 r.Date.HasValue && r.Date.Value == today &&
                 r.ConfirmationCode == confirmationCode);
         
-        if (reservation == null) return BadRequest("Invalid or expired confirmation code.");
+        if (reservation == null) return BadRequest("Invalid or expired confirmation code for today's reservations.");
         reservation.StatusID = 2;
         
         var letter = reservation.Category.Letter;
@@ -217,6 +279,14 @@ public class VisitController(ApplicationDbContext context, IMapper mapper) : Con
         
         var added = await AddReservationToQueue(reservation, registrationNumber);
         return !added ? StatusCode(500, "An error occurred while adding to the queue.") : Ok(new { RegistrationNumber = registrationNumber });
+    }
+    
+    [HttpGet("info")]
+    [ProducesResponseType(200)]
+    [Produces("application/json")]
+    public IActionResult GetInfo()
+    {
+        return Ok(GetInfoList());
     }
 
     // TODO: needed?
