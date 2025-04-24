@@ -18,7 +18,7 @@ public class AuthController(ApplicationDbContext context, IConfiguration configu
     {
         var claims = new[]
         {
-            new Claim(JwtRegisteredClaimNames.Sub, user.Username),
+            new Claim(JwtRegisteredClaimNames.Sub, user.ID.ToString()),
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
             new Claim(ClaimTypes.NameIdentifier, user.ID.ToString()),
             new Claim(ClaimTypes.Role, user.Role.Name)
