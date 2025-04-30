@@ -111,49 +111,60 @@ public class QueueController(ApplicationDbContext context) : ControllerBase
         return Ok(awaitingClients);
     }
 
-    [HttpGet("window-clients")]
-    [Authorize(Roles = "Administrator")]
-    [ProducesResponseType(typeof(IEnumerable<WindowQueueDto>), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetAllClientsPerWindow()
-    {
-        var today = DateOnly.FromDateTime(DateTime.Now);
-        var targetStatuses = new[] { "Oczekujący", "Wezwany", "Obsługiwany" };
+[HttpGet("window-clients")]
+[Authorize(Roles = "Administrator")]
+[ProducesResponseType(typeof(IEnumerable<WindowQueueDto>), StatusCodes.Status200OK)]
+public async Task<IActionResult> GetAllClientsPerWindow()
+{
+    var today = DateOnly.FromDateTime(DateTime.Now);
+    var targetStatuses = new[] { "Oczekujący", "Wezwany", "Obsługiwany" };
 
+    var windowCategories = await context.Windows_and_Categories
+        .Where(wc => wc.Date == today)
+        .Include(wc => wc.Window)
+        .Include(wc => wc.Category)
+        .ToListAsync();
 
-        var windowCategories = await context.Windows_and_Categories
-            .Where(wc => wc.Date == today)
-            .Include(wc => wc.Window)
-            .Include(wc => wc.Category)
-            .ToListAsync();
+    var reservations = await context.Reservations
+        .Include(r => r.Client)
+        .Include(r => r.Status)
+        .Include(r => r.Category)
+        .Where(r => r.Date == today && targetStatuses.Contains(r.Status.Name))
+        .ToListAsync();
 
+    var queue = await context.Queue
+        .Where(q => q.WindowID != null)
+        .ToListAsync();
 
-        var reservations = await context.Reservations
-            .Include(r => r.Client)
-            .Include(r => r.Status)
-            .Where(r => r.Date == today && targetStatuses.Contains(r.Status.Name))
-            .ToListAsync();
+    var result = windowCategories
+        .GroupBy(wc => wc.Window.WindowNumber)
+        .Select(g => new WindowQueueDto
+        {
+            WindowNumber = g.Key,
+            Clients = reservations
+                .Where(r =>
+                    // Jeśli oczekujący – pokaż w każdym pasującym okienku
+                    (r.Status.Name == "Oczekujący" && g.Any(wc => wc.CategoryID == r.CategoryID)) ||
 
+                    // Jeśli wezwany/obsługiwany – tylko jeśli przypisany do tego okienka
+                    (r.Status.Name is "Wezwany" or "Obsługiwany" &&
+                     queue.Any(q => q.ReservationID == r.ID && 
+                                    g.Any(wc => wc.WindowID == q.WindowID)))
+                )
+                .OrderBy(r => r.Time)
+                .Select(r => new ClientDto
+                {
+                    QueueCode = r.ConfirmationCode ?? "BRAK_KODU",
+                    FullName = $"{r.Client.FirstName} {r.Client.LastName}",
+                    Category = r.Category.Name,
+                    Status = r.Status.Name
+                })
+                .ToList()
+        })
+        .Where(w => w.Clients.Any())
+        .ToList();
 
-        var result = windowCategories
-            .GroupBy(wc => wc.Window.WindowNumber)
-            .Select(g => new WindowQueueDto
-            {
-                WindowNumber = g.Key,
-                Clients = reservations
-                    .Where(r => g.Any(wc => wc.CategoryID == r.CategoryID))
-                    .OrderBy(r => r.Time)
-                    .Select(r => new ClientDto
-                    {
-                        QueueCode = r.ConfirmationCode ?? "BRAK_KODU",
-                        FullName = $"{r.Client.FirstName} {r.Client.LastName}",
-                        Category = g.First(wc => wc.CategoryID == r.CategoryID).Category.Name,
-                        Status = r.Status.Name
-                    })
-                    .ToList()
-            })
-            .Where(w => w.Clients.Any())
-            .ToList();
+    return Ok(result);
+}
 
-        return Ok(result);
-    }
 }
