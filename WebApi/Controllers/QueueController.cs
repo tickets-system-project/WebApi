@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using WebApi.Data;
-using WebApi.Models;
 using WebApi.Models.DTOs.Queue;
 
 namespace WebApi.Controllers;
@@ -19,7 +18,6 @@ public class QueueController(ApplicationDbContext context) : ControllerBase
     public async Task<IActionResult> GetWindowQueue(int windowId)
     {
         var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        Console.WriteLine(userIdString);
         if (!int.TryParse(userIdString, out var clerkId))
         {
             return BadRequest("Invalid user ID in token.");

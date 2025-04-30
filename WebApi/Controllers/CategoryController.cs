@@ -94,6 +94,12 @@ public class CategoryController(ApplicationDbContext context) : ControllerBase
         {
             return NotFound();
         }
+        
+        if (string.IsNullOrEmpty(categoryDto.Letter) &&
+            string.IsNullOrEmpty(categoryDto.Name))
+        {
+            return BadRequest("No update data provided.");
+        }
 
         if (!string.IsNullOrEmpty(categoryDto.Letter) &&
             categoryDto.Letter != existingCategory.Letter)
@@ -121,12 +127,6 @@ public class CategoryController(ApplicationDbContext context) : ControllerBase
             }
 
             existingCategory.Name = categoryDto.Name;
-        }
-
-        if (string.IsNullOrEmpty(categoryDto.Letter) &&
-            string.IsNullOrEmpty(categoryDto.Name))
-        {
-            return BadRequest("No update data provided.");
         }
 
         context.CaseCategories.Update(existingCategory);
