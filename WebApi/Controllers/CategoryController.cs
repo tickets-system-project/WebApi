@@ -11,15 +11,14 @@ namespace WebApi.Controllers;
 [Route("api/category")]
 public class CategoryController(ApplicationDbContext context) : ControllerBase
 {
-    
     [HttpGet]
     [Authorize(Roles = "Administrator")]
     public async Task<ActionResult<IEnumerable<CaseCategory>>> GetCategories()
     {
         return await context.CaseCategories.ToListAsync();
     }
-    
-    
+
+
     [HttpGet("{id}")]
     [Authorize(Roles = "Administrator")]
     public async Task<ActionResult<CaseCategory>> GetCategory(int id)
@@ -33,7 +32,7 @@ public class CategoryController(ApplicationDbContext context) : ControllerBase
 
         return category;
     }
-    
+
     [HttpPost]
     [Authorize(Roles = "Administrator")]
     [ProducesResponseType(typeof(CaseCategory), StatusCodes.Status201Created)]
@@ -45,38 +44,38 @@ public class CategoryController(ApplicationDbContext context) : ControllerBase
         {
             return BadRequest(ModelState);
         }
-        
+
         var letterExists = await context.CaseCategories
             .AnyAsync(c => c.Letter == categoryDto.Letter);
-    
+
         if (letterExists)
         {
             return Conflict($"Category with letter '{categoryDto.Letter}' already exists.");
         }
-        
+
         var nameExists = await context.CaseCategories
             .AnyAsync(c => c.Name == categoryDto.Name);
-    
+
         if (nameExists)
         {
             return Conflict($"Category with name '{categoryDto.Name}' already exists.");
         }
-        
+
         var category = new CaseCategory
         {
             Letter = categoryDto.Letter,
             Name = categoryDto.Name
         };
-        
+
         context.CaseCategories.Add(category);
         await context.SaveChangesAsync();
-        
+
         return CreatedAtAction(
-            nameof(GetCategory), 
-            new { id = category.ID }, 
+            nameof(GetCategory),
+            new { id = category.ID },
             category);
     }
-    
+
     [HttpPut("{id}")]
     [Authorize(Roles = "Administrator")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
@@ -89,46 +88,53 @@ public class CategoryController(ApplicationDbContext context) : ControllerBase
         {
             return BadRequest(ModelState);
         }
+
         var existingCategory = await context.CaseCategories.FindAsync(id);
         if (existingCategory == null)
         {
             return NotFound();
         }
-        if (!string.IsNullOrEmpty(categoryDto.Letter) && 
+
+        if (!string.IsNullOrEmpty(categoryDto.Letter) &&
             categoryDto.Letter != existingCategory.Letter)
         {
             var letterExists = await context.CaseCategories
                 .AnyAsync(c => c.Letter == categoryDto.Letter && c.ID != id);
-        
+
             if (letterExists)
             {
                 return Conflict($"Category with letter '{categoryDto.Letter}' already exists.");
             }
+
             existingCategory.Letter = categoryDto.Letter;
         }
-        if (!string.IsNullOrEmpty(categoryDto.Name) && 
+
+        if (!string.IsNullOrEmpty(categoryDto.Name) &&
             categoryDto.Name != existingCategory.Name)
         {
             var nameExists = await context.CaseCategories
                 .AnyAsync(c => c.Name == categoryDto.Name && c.ID != id);
-        
+
             if (nameExists)
             {
                 return Conflict($"Category with name '{categoryDto.Name}' already exists.");
             }
+
             existingCategory.Name = categoryDto.Name;
         }
-        if (string.IsNullOrEmpty(categoryDto.Letter) && 
+
+        if (string.IsNullOrEmpty(categoryDto.Letter) &&
             string.IsNullOrEmpty(categoryDto.Name))
         {
             return BadRequest("No update data provided.");
         }
+
         context.CaseCategories.Update(existingCategory);
         await context.SaveChangesAsync();
 
         return Ok(existingCategory);
     }
-    
+
     [HttpDelete("{id}")]
     [Authorize(Roles = "Administrator")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
@@ -146,11 +152,7 @@ public class CategoryController(ApplicationDbContext context) : ControllerBase
 
         return NoContent();
     }
-    //Tylko admin albo urzędnik 
-    // Wybierać queueCode, imie i nazwisko, kategoria
-    // Dla admina wszyscy
-    // Dla urzędniaka tylko oczekujacy
-    // Sprawdzić jak Konefał w usercontroller czy jest adminem czy jest zwykłem urzednikiem
+
     [HttpGet("{categoryId}/queue")]
     [Authorize(Roles = "Administrator")]
     [ProducesResponseType(typeof(IEnumerable<ReservationQueueDto>), StatusCodes.Status200OK)]
@@ -159,28 +161,26 @@ public class CategoryController(ApplicationDbContext context) : ControllerBase
     {
         var category = await context.CaseCategories
             .FirstOrDefaultAsync(c => c.ID == categoryId);
-    
+
         if (category == null)
         {
             return NotFound($"Category with ID {categoryId} not found.");
         }
-        
+
         var queue = await context.Queue
             .Include(q => q.Reservation)
             .ThenInclude(r => r.Client)
             .Include(q => q.Reservation)
             .ThenInclude(r => r.Status)
             .Include(q => q.Window)
-            .Where(q => q.Reservation.CategoryID == categoryId && 
+            .Where(q => q.Reservation.CategoryID == categoryId &&
                         q.Reservation.Status.Name == "Oczekujący")
             .OrderBy(q => q.Reservation.Time)
             .Select(q => new ReservationQueueDto
             {
-              
                 FirstName = q.Reservation.Client.FirstName,
                 LastName = q.Reservation.Client.LastName,
                 PESEL = q.Reservation.Client.PESEL,
-      
             })
             .ToListAsync();
 
