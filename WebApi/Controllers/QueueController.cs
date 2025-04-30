@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using WebApi.Data;
-using WebApi.Models;
 using WebApi.Models.DTOs.Queue;
 
 namespace WebApi.Controllers;

@@ -2,6 +2,6 @@
 
 public class CalledClientDto
 {
-    public string QueueCode { get; set; }
-    public string WindowNumber { get; set; }
+    public required string QueueCode { get; set; }
+    public required string WindowNumber { get; set; }
 }
