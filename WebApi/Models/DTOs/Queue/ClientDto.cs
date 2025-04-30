@@ -1,7 +1,7 @@
 ﻿public class ClientDto
 {
-    public string QueueCode { get; set; }
-    public string FullName { get; set; }
-    public string Category { get; set; }
-    public string Status { get; set; }
+    public string QueueCode { get; set; } = default!;
+    public string FullName { get; set; } = default!;
+    public int Category { get; set; }
+    public int Status { get; set; }
 }
