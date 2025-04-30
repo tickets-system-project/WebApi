@@ -182,15 +182,12 @@ public class UsersController(ApplicationDbContext context, IMapper mapper) : Con
     [ProducesResponseType(401)]
     [ProducesResponseType(403)]
     [Produces("application/json")]
-    public async Task<IActionResult> SearchUsers(string? firstName = null, string? lastName = null, int? roleID = null)
+    public async Task<IActionResult> SearchUsers(string? name = null, int? roleID = null)
     {
         var query = context.Users.Include(u => u.Role).AsQueryable();
 
-        if (!string.IsNullOrWhiteSpace(firstName))
-            query = query.Where(u => u.FirstName.ToLower().Contains(firstName.ToLower()));
-
-        if (!string.IsNullOrWhiteSpace(lastName))
-            query = query.Where(u => u.LastName.ToLower().Contains(lastName.ToLower()));
+        if (!string.IsNullOrWhiteSpace(name)) 
+            query = query.Where(u => (u.FirstName + " " + u.LastName).ToLower().Contains(name.Trim().ToLower()));
 
         if (roleID.HasValue)
             query = query.Where(u => u.Role.ID == roleID.Value);
