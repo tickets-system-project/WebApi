@@ -1,6 +1,8 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using WebApi.Data;
+using WebApi.Models.DTOs.Category;
 using WebApi.Models.Entities;
 
 namespace WebApi.Controllers;
@@ -10,12 +12,15 @@ namespace WebApi.Controllers;
 public class CategoryController(ApplicationDbContext context) : ControllerBase
 {
     [HttpGet]
+    [Authorize(Roles = "Administrator")]
     public async Task<ActionResult<IEnumerable<CaseCategory>>> GetCategories()
     {
         return await context.CaseCategories.ToListAsync();
     }
-    
+
+
     [HttpGet("{id}")]
+    [Authorize(Roles = "Administrator")]
     public async Task<ActionResult<CaseCategory>> GetCategory(int id)
     {
         var category = await context.CaseCategories.FindAsync(id);
@@ -27,40 +32,158 @@ public class CategoryController(ApplicationDbContext context) : ControllerBase
 
         return category;
     }
-    
+
     [HttpPost]
-    public async Task<IActionResult> CreateCategory([FromBody] CaseCategory category)
+    [Authorize(Roles = "Administrator")]
+    [ProducesResponseType(typeof(CaseCategory), StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<IActionResult> CreateCategory([FromBody] CreateCaseCategoryDto categoryDto)
     {
-        // TODO: Validate the Category object (e.g., name, etc.)
-        // TODO: Add the new category to the database
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(ModelState);
+        }
 
-        return NoContent(); // TODO: delete this placeholder
+        var letterExists = await context.CaseCategories
+            .AnyAsync(c => c.Letter == categoryDto.Letter);
+
+        if (letterExists)
+        {
+            return Conflict($"Category with letter '{categoryDto.Letter}' already exists.");
+        }
+
+        var nameExists = await context.CaseCategories
+            .AnyAsync(c => c.Name == categoryDto.Name);
+
+        if (nameExists)
+        {
+            return Conflict($"Category with name '{categoryDto.Name}' already exists.");
+        }
+
+        var category = new CaseCategory
+        {
+            Letter = categoryDto.Letter,
+            Name = categoryDto.Name
+        };
+
+        context.CaseCategories.Add(category);
+        await context.SaveChangesAsync();
+
+        return CreatedAtAction(
+            nameof(GetCategory),
+            new { id = category.ID },
+            category);
     }
-    
+
     [HttpPut("{id}")]
-    public async Task<IActionResult> UpdateCategory(int id, [FromBody] CaseCategory category)
+    [Authorize(Roles = "Administrator")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<IActionResult> UpdateCategory(int id, [FromBody] UpdateCaseCategoryDto categoryDto)
     {
-        // TODO: Check if the category exists by id
-        // TODO: Update the category properties (e.g., name, etc.)
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(ModelState);
+        }
 
-        return NoContent(); // TODO: delete this placeholder
+        var existingCategory = await context.CaseCategories.FindAsync(id);
+        if (existingCategory == null)
+        {
+            return NotFound();
+        }
+        
+        if (string.IsNullOrEmpty(categoryDto.Letter) &&
+            string.IsNullOrEmpty(categoryDto.Name))
+        {
+            return BadRequest("No update data provided.");
+        }
+
+        if (!string.IsNullOrEmpty(categoryDto.Letter) &&
+            categoryDto.Letter != existingCategory.Letter)
+        {
+            var letterExists = await context.CaseCategories
+                .AnyAsync(c => c.Letter == categoryDto.Letter && c.ID != id);
+
+            if (letterExists)
+            {
+                return Conflict($"Category with letter '{categoryDto.Letter}' already exists.");
+            }
+
+            existingCategory.Letter = categoryDto.Letter;
+        }
+
+        if (!string.IsNullOrEmpty(categoryDto.Name) &&
+            categoryDto.Name != existingCategory.Name)
+        {
+            var nameExists = await context.CaseCategories
+                .AnyAsync(c => c.Name == categoryDto.Name && c.ID != id);
+
+            if (nameExists)
+            {
+                return Conflict($"Category with name '{categoryDto.Name}' already exists.");
+            }
+
+            existingCategory.Name = categoryDto.Name;
+        }
+
+        context.CaseCategories.Update(existingCategory);
+        await context.SaveChangesAsync();
+
+        return Ok(existingCategory);
     }
-    
+
     [HttpDelete("{id}")]
+    [Authorize(Roles = "Administrator")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> DeleteCategory(int id)
     {
-        // TODO: Find the category by id
-        // TODO: Delete the category from the database
+        var category = await context.CaseCategories.FindAsync(id);
+        if (category == null)
+        {
+            return NotFound();
+        }
 
-        return NoContent(); // TODO: delete this placeholder
+        context.CaseCategories.Remove(category);
+        await context.SaveChangesAsync();
+
+        return NoContent();
     }
-    
+
     [HttpGet("{categoryId}/queue")]
+    [Authorize(Roles = "Administrator")]
+    [ProducesResponseType(typeof(IEnumerable<ReservationQueueDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetQueueForClerkCategory(int categoryId)
     {
-        // TODO: Find the category by categoryID
-        // TODO: Get all clients waiting for the same case category as the clerk
-        // TODO: Return the client queue
-        return NoContent(); // TODO: delete this placeholder
+        var category = await context.CaseCategories
+            .FirstOrDefaultAsync(c => c.ID == categoryId);
+
+        if (category == null)
+        {
+            return NotFound($"Category with ID {categoryId} not found.");
+        }
+
+        var queue = await context.Queue
+            .Include(q => q.Reservation)
+            .ThenInclude(r => r.Client)
+            .Include(q => q.Reservation)
+            .ThenInclude(r => r.Status)
+            .Include(q => q.Window)
+            .Where(q => q.Reservation.CategoryID == categoryId &&
+                        q.Reservation.Status.Name == "Oczekujący")
+            .OrderBy(q => q.Reservation.Time)
+            .Select(q => new ReservationQueueDto
+            {
+                FirstName = q.Reservation.Client.FirstName,
+                LastName = q.Reservation.Client.LastName,
+                PESEL = q.Reservation.Client.PESEL,
+            })
+            .ToListAsync();
+
+        return Ok(queue);
     }
 }
