@@ -162,8 +162,8 @@ public class QueueController(ApplicationDbContext context) : ControllerBase
 
                         return new ClientDto
                         {
-                            QueueCode = q.QueueCode!,
-                            FullName = $"{r.Client.FirstName} {r.Client.LastName}",
+                            QueueCode = q.QueueCode,
+                            FullName = $"{r.Client?.FirstName ?? " "} {r.Client?.LastName ?? " "}",
                             Category = r.Category.ID,
                             Status = r.Status.ID
                         };
