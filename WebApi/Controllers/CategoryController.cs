@@ -12,7 +12,7 @@ namespace WebApi.Controllers;
 public class CategoryController(ApplicationDbContext context) : ControllerBase
 {
     [HttpGet]
-    [Authorize(Roles = "Administrator")]
+    [Authorize(Roles = "Administrator, Urzędnik")]
     public async Task<ActionResult<IEnumerable<CaseCategory>>> GetCategories()
     {
         return await context.CaseCategories.ToListAsync();
@@ -20,7 +20,7 @@ public class CategoryController(ApplicationDbContext context) : ControllerBase
 
 
     [HttpGet("{id}")]
-    [Authorize(Roles = "Administrator")]
+    [Authorize(Roles = "Administrator, Urzędnik")]
     public async Task<ActionResult<CaseCategory>> GetCategory(int id)
     {
         var category = await context.CaseCategories.FindAsync(id);
