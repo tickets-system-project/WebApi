@@ -107,6 +107,20 @@ public class UsersController(ApplicationDbContext context, IMapper mapper) : Con
         context.Users.Add(user);
         await context.SaveChangesAsync();
         
+        if (!string.IsNullOrWhiteSpace(userDto.Password))
+        {
+            context.LoginData.Add(new LoginData
+            {
+                UserID = user.ID,
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword(userDto.Password)
+            });
+            await context.SaveChangesAsync();
+        }
+        else
+        {
+            return BadRequest("Password is required.");
+        }
+
         await context.Entry(user).Reference(u => u.Role).LoadAsync();
         var createdDto = mapper.Map<UserDto>(user);
         return CreatedAtAction(nameof(GetUser), new { id = user.ID }, createdDto);
@@ -149,6 +163,23 @@ public class UsersController(ApplicationDbContext context, IMapper mapper) : Con
         {
             if (await UsernameExistsAsync(userDto.Username))
                 return BadRequest("Username is already taken.");
+        }
+
+        if (!string.IsNullOrEmpty(userDto.Password))
+        {
+            var loginData = await context.LoginData.FirstOrDefaultAsync(ld => ld.UserID == id);
+            if (loginData != null)
+            {
+                loginData.PasswordHash = BCrypt.Net.BCrypt.HashPassword(userDto.Password);
+            }
+            else
+            {
+                context.LoginData.Add(new LoginData
+                {
+                    UserID = id,
+                    PasswordHash = BCrypt.Net.BCrypt.HashPassword(userDto.Password)
+                });
+            }
         }
 
         await context.SaveChangesAsync();

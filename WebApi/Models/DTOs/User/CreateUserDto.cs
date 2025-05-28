@@ -18,4 +18,8 @@ public class CreateUserDto
     
     [Required]
     public required int RoleID { get; set; }
+
+    [Required]
+    public required string Password { get; set; }
+
 }
