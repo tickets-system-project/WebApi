@@ -39,6 +39,8 @@ public class MappingProfile : Profile
             .ForMember(dest => dest.CaseCategoryID, opt => opt.MapFrom(src => src.Category.ID))
             .ForMember(dest => dest.Date, opt => opt.MapFrom(src => src.Date.Value))
             .ForMember(dest => dest.Time, opt => opt.MapFrom(src => src.Time.Value));
+        
+        CreateMap<Slot, SlotDto>();
     }
     
     private static string GenerateConfirmationCode()

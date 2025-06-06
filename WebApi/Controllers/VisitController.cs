@@ -289,12 +289,34 @@ public class VisitController(ApplicationDbContext context, IMapper mapper, Email
         return Ok(GetInfoList());
     }
 
-    // TODO: needed?
-    // [HttpGet("currentReservations")]
-    // public async Task<IActionResult> GetCurrentReservations([FromQuery] DateTime dateTime)
-    // {
-    //     // TODO: return currentReservation number for specified date and time
-    //     
-    //     return NoContent(); // TODO: delete this placeholder
-    // }
+    [HttpGet("slots/{categoryId}")]
+    [ProducesResponseType(typeof(List<SlotDto>), 200)]
+    [ProducesResponseType(400)]
+    [ProducesResponseType(404)]
+    [Produces("application/json")]
+    public async Task<IActionResult> GetAvailableSlotsByCategory(int categoryId)
+    {
+        var category = await context.CaseCategories.FirstOrDefaultAsync(c => c.ID == categoryId);
+        if (category == null) return BadRequest("Invalid Case Category ID.");
+        
+        var today = DateOnly.FromDateTime(DateTime.Now);
+        var nowTime = TimeOnly.FromDateTime(DateTime.Now);
+        
+        var slots = await context.Slots
+            .Where(s => s.CategoryID == categoryId && 
+                        s.CurrentReservations < s.MaxReservations &&
+                        (
+                            s.Date > today || 
+                            (s.Date == today && s.Time > nowTime)
+                        )
+            )
+            .OrderBy(s => s.Date)
+            .ThenBy(s => s.Time)
+            .ToListAsync();
+
+        var slotDtos = mapper.Map<List<SlotDto>>(slots);
+
+        return Ok(slotDtos);
+    }
+
 }
