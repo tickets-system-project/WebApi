@@ -19,7 +19,6 @@ public class CategoryController(ApplicationDbContext context) : ControllerBase
 
 
     [HttpGet("{id}")]
-    [Authorize(Roles = "Administrator, Urzędnik")]
     public async Task<ActionResult<CaseCategory>> GetCategory(int id)
     {
         var category = await context.CaseCategories.FindAsync(id);

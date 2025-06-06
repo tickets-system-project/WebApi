@@ -69,7 +69,6 @@ public class QueueController(ApplicationDbContext context) : ControllerBase
 
 
     [HttpGet("called")]
-    [Authorize(Roles = "Administrator, Urzędnik")]
     [ProducesResponseType(typeof(IEnumerable<CalledClientDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetCalledClients()
     {
@@ -93,7 +92,6 @@ public class QueueController(ApplicationDbContext context) : ControllerBase
 
 
     [HttpGet("awaiting")]
-    [Authorize(Roles = "Administrator, Urzędnik")]
     [ProducesResponseType(typeof(IEnumerable<string>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAwaitingClients()
     {
