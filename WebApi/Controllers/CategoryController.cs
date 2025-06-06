@@ -12,7 +12,6 @@ namespace WebApi.Controllers;
 public class CategoryController(ApplicationDbContext context) : ControllerBase
 {
     [HttpGet]
-    [Authorize(Roles = "Administrator, Urzędnik")]
     public async Task<ActionResult<IEnumerable<CaseCategory>>> GetCategories()
     {
         return await context.CaseCategories.ToListAsync();
