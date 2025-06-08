@@ -68,11 +68,12 @@ public class VisitController(ApplicationDbContext context, IMapper mapper, Email
     [ProducesResponseType(400)]
     [ProducesResponseType(500)]
     [Produces("application/json")]
-    public async Task<IActionResult> ScheduleVisit([FromBody] VisitRequest visitRequest)
+    public async Task<IActionResult> ScheduleVisit([FromBody] VisitRequest visitRequest, [FromHeader(Name = "X-Frontend-Url")] string url)
     {
-        var baseUrl = $"{Request.Scheme}://{Request.Host}";
-        
         if (!ModelState.IsValid) return BadRequest(ModelState);
+        
+        if (string.IsNullOrWhiteSpace(url) || !Uri.IsWellFormedUriString(url, UriKind.Absolute))
+            return BadRequest("No valid 'X-Frontend-BaseUrl' header in request.");
         
         var today = DateOnly.FromDateTime(DateTime.Now);
         var nowTime = TimeOnly.FromDateTime(DateTime.Now);
@@ -132,7 +133,7 @@ public class VisitController(ApplicationDbContext context, IMapper mapper, Email
         slot.CurrentReservations++;
         await context.SaveChangesAsync();
         
-        var cancellationLink = $"{baseUrl}/visit/cancel/{reservation.ID}";
+        var cancellationLink = $"{url.TrimEnd('/')}/visit/cancel/{reservation.ID}";
         
         var visitResponse = mapper.Map<VisitResponse>(reservation);
         visitResponse.Email = visitRequest.Email;
