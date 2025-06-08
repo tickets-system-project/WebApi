@@ -48,6 +48,7 @@ public class EmailService(string smtpHost = "localhost", int smtpPort = 1025)
         }
         catch (Exception ex)
         {
+            Console.WriteLine($"Failed to send confirmation email: {ex}");
             throw new InvalidOperationException("Failed to send confirmation email.", ex);
         }
     }
@@ -90,6 +91,7 @@ public class EmailService(string smtpHost = "localhost", int smtpPort = 1025)
         }
         catch (Exception ex)
         {
+            Console.WriteLine($"Failed to send cancellation email: {ex}");
             throw new InvalidOperationException("Failed to send cancellation email.", ex);
         }
     }

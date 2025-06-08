@@ -58,7 +58,11 @@ builder.Services.AddSwaggerGen(c =>
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "API", Version = "v1" });
 });
 
-builder.Services.AddSingleton<EmailService>();
+var configuration = builder.Configuration;
+var smtpHost = configuration["EmailService:SmtpHost"] ?? "localhost";
+var smtpPort = int.TryParse(configuration["EmailService:SmtpPort"], out var port) ? port : 1025;
+
+builder.Services.AddSingleton(new EmailService(smtpHost, smtpPort));
 
 builder.Services.AddControllers();
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
