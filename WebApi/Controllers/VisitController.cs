@@ -247,7 +247,7 @@ public class VisitController(ApplicationDbContext context, IMapper mapper, Email
     public async Task<IActionResult> ScheduleUnregistered([FromBody] UnregisteredVisitRequest request)
     {
         var today = DateOnly.FromDateTime(DateTime.Now);
-        var time = new TimeOnly((DateTime.Now.Hour + 1) % 24, 0);
+        var time = new TimeOnly(DateTime.Now.Hour, 0);
         
         if (!ModelState.IsValid) return BadRequest(ModelState);
 
