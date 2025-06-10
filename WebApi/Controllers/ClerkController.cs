@@ -269,4 +269,29 @@ public class ClerkController(ApplicationDbContext context) : ControllerBase
             caseId = reservation.ID
         });
     }
+
+    [HttpGet("window")]
+    [Authorize(Roles = "Administrator, Urzędnik")]
+    [ProducesResponseType(typeof(int), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> GetTodayWindow(string id)
+    {
+        var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        
+        if (!int.TryParse(userIdString, out var clerkId)) return BadRequest("Invalid user ID in token.");
+        if (userIdString != id) return BadRequest("Mismatch between IDs in token and request.");
+
+        var user = await context.Users.FindAsync(clerkId);
+        if (user == null) return NotFound("Clerk not found.");
+
+        var today = DateOnly.FromDateTime(DateTime.Now);
+
+        var windowId = await context.Windows_and_Categories
+            .Where(wc => wc.ClerkID == clerkId && wc.Date == today)
+            .Select(wc => wc.WindowID)
+            .FirstOrDefaultAsync();
+
+        return windowId == null ? NotFound("Window for clerk not found.") : Ok(new { windowID = windowId });
+    }
 }
